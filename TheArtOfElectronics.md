@@ -18,57 +18,103 @@
 ### 1.3 信号
 #### 1.3.2 信号幅度与分贝
 以信号幅值计算  
+
 $$
 dB = 20 \lg \frac{A_2}{A_1}
 $$
+
 以信号功率计算  
+
 $$
 dB = 10 \lg \frac{P_2}{P_1}
 $$
+
 ### 1.6 阻抗与电抗
 #### 1.6.1 电抗电路的频率分析
 ##### 电压与电流的复数表示
 引入: 单个数值同时表示关于幅值与相位的信息   
+
 $$
 V = V_0 e^{j \phi}
 $$
+
 $$
 V(t) = Re(Ve^{j \omega t})
 $$
+
 ##### 电容与电感的电抗
 电容:  
+
 $$
 V(t) = Re(Ve^{j \omega t})
 $$
+
 $$
 I(t) = C(\mathrm d v / \mathrm d t)
 $$
+
 $$
 I(t) = -V_0 C \omega \sin \omega t = Re(\frac{V_0 e^{j \omega t}}{\frac{1}{j \omega C}})
 $$
+
 $$
 \implies X_c = \frac{1}{j \omega C}
 $$
+
 同理,对电感:  
+
 $$
 X_l = j \omega L
 $$
+
 ##### 复欧姆定律
+
 $$
 I = V / Z
 $$
+
 ##### 电抗电路中的功率
+
 $$
 P = Re(VI^*) = Re(V^* I)
 $$
+
 其中V与I为复均方根值  
 上式由复数点积定义规定,共轭为保证复数自乘时自恰  
+
 $$
 功率因数 = \frac{功率}{|V||I|}
 $$
+
 功率因数取值范围从0(纯电抗)到1(纯电阻)
 #### 1.6.2 RC滤波器
 ##### 高通滤波器
+<p style="text-align: center;"><img src="./img/High_pass_filter.png" width=300/></p>  
+图片显示了一个由电容和电阻构成的分压电路，由复欧姆定律可得  
+
+$$
+I = \frac{V_{in}}{Z_{total}} = \frac{V_{in}}{R-(j/\omega C)} = \frac{V_{in}[R+(j/\omega C)]}{R^2 + (1/\omega^2 C^2)}
+$$
+
+这样，电阻两端的电压就是  
+
+$$
+V_{out} = IZ_R = \frac{V_{in}[R+(j/\omega C)]}{R^2 + (1/\omega^2 C^2)}
+$$
+
+我们只关心幅度，不关心相位  
+
+$$
+V_{out} = \sqrt {(V_{out}V_{out}^*)} = \frac{R}{[R^2+(1/\omega^2 C^2)]^{1/2}} V_{in}
+$$
+
+工程中，取-3dB(功率一半)为截止点，计算得
+
+$$
+f_{3dB} = \frac{1}{2 \pi RC}
+$$
+
+相移: 经验准则是0.1 f3dB与10 f3dB的相移大概是6度
 ##### 电容与电感的对偶
 使用电感与电阻结合也可以构成低通或高通滤波器,但实际中很少看到RL滤波器。因为电感比电容笨重,价格更贵,而且特性也不如电容好。除非在高频电路中
 #### 1.6.5 谐振电路与有源滤波器
@@ -79,6 +125,7 @@ $$
 $$
 f_0 = 1/2 \pi \sqrt{LC}
 $$
+
 时阻抗为无穷大,使得该频率点上的响应值为一个峰值  
 串联LC谐振电路与之相反,为一个谷值  
 <p style="text-align: center;"><img src="./img/800px-RL_series_C_parallel.svg.png" width=300/></p>  
