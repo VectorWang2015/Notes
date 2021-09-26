@@ -210,5 +210,41 @@ if __name__ == "__main__":
     losses, weights = train_info
     #print(losses)
 
+    predis = predict(x_test, weights)
+    print("Mean absolute error: {}".format(round(mae(predis, y_test), 4)))
+    print("Root mean square error: {}".format(round(rmse(predis, y_test), 4)))
+
+    """
+    # for plotting losses
     plt.plot(np.arange(1000), losses)
+    """
+
+    """
+    # for plotting predicted vs actual
+    plt.xlabel("aredicted")
+    plt.ylabel("Acutal")
+    plt.title("Predicted vs Actual value for\ncustom linear regression model")
+    plt.xlim([0,51])
+    plt.ylim([0,51])
+    plt.scatter(predis, y_test)
+    plt.plot([0,51], [0,51])
     plt.show()
+    """
+
+    """
+    for plotting most important feature vs target&prediction
+    NUM = 40
+    a = np.repeat(x_test[:,:-1].mean(axis=0,keepdims=True), NUM, axis=0)
+    b = np.linspace(-1.5, 3.5, NUM).reshape(NUM, 1)
+
+    test_feature = np.concatenate([a, b], axis=1)
+    test_predis = predict(test_feature, weights)[:,0]
+
+    plt.scatter(x_test[:, 12], y_test)
+    plt.plot(test_feature[:,-1], test_predis, linewidth=2, c='orange')
+    plt.ylim([6, 51])
+    plt.xlabel("Most important feature (normalized)")
+    plt.ylabel("Target/Predictions")
+    plt.title("Most important feature vs. target and predictions,\n custom linear regression");
+    plt.show()
+    """
