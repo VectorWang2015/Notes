@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
-
+np.set_printoptions(precision=4)
 batch = Tuple[np.ndarray, np.ndarray]
 
 def forward_linear_regression(x_batch: np.ndarray,
@@ -66,7 +66,7 @@ def loss_gradients(forward_info: Dict[str, np.ndarray],
     dn_dw = np.transpose(forward_info['x'], (1,0))
     dp_db = np.ones_like(weights['b'])
 
-    dl_db = (dl_dp * dp_db).sum(axis=0)/20
+    dl_db = (dl_dp * dp_db).sum(axis=0)
 
     dl_dn = dl_dp * dp_dn
     dl_dw = np.dot(dn_dw, dl_dn)
@@ -198,6 +198,7 @@ if __name__ == "__main__":
     data = boston['data']
     target = boston['target']
     feature_names = boston['feature_names']
+
     s = StandardScaler()
     data = s.fit_transform(data)
 
