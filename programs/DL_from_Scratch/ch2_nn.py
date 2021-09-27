@@ -45,6 +45,13 @@ def forward_loss(x: ndarray,
     assert x.shape[0] == y.shape[0], \
             "x's axis-1 should be the same shape as y's axis-1"
 
+    """
+    print(weights['W1'])
+    print(weights['W2'])
+    print(weights['B1'])
+    print(weights['B2'])
+    input()
+    """
     M1 = np.dot(x, weights['W1'])
     N1 = M1 + weights['B1']
     O1 = sigmoid(N1)
@@ -75,7 +82,7 @@ def loss_gradients(forward_info: Dict[str, ndarray],
     dl_do1 = np.dot(dl_dm2, np.transpose(weights['W2'], (1,0)))
     dl_dw2 = np.dot(np.transpose(forward_info['O1'], (1,0)), dl_dm2)
 
-    do1_dn1 = sigmoid(forward_info['N1'])*(np.ones_like(forward_info['N1']) - forward_info['N1'])
+    do1_dn1 = sigmoid(forward_info['N1'])*(np.ones_like(forward_info['N1']) - sigmoid(forward_info['N1']))
     dn1_dm1 = np.ones_like(forward_info['N1'])
     do1_dm1 = do1_dn1 * dn1_dm1
 
@@ -87,8 +94,8 @@ def loss_gradients(forward_info: Dict[str, ndarray],
     dn1_db1 = np.ones_like(weights['B1'])
     dl_db2 = (dl_dp*dp_db2).sum(axis=0)
     dl_db1 = (dl_dn1*dn1_db1).sum(axis=0)
-    print(dl_db2)
-    print(dl_db1)
+    #print(dl_db2)
+    #print(dl_db1)
 
     loss_gradients: Dict[str, ndarray] = {}
     loss_gradients['B1'] = dl_db1
@@ -166,11 +173,13 @@ def init_weights(n_in: int, n_ns: int) -> Dict[str, ndarray]:
 def train(x: ndarray,
         y: ndarray,
         n_iter: int = 1000,
+        test_every: int = 1000,
         learning_rate: float = 1e-2,
         hidden_size: int = 13,
         batch_size: int = 100,
         return_losses: bool = False,
         return_weights: bool = False,
+        return_scores: bool = False,
         seed: int = 1) -> None:
 
     if seed:
@@ -225,7 +234,7 @@ if __name__ == "__main__":
 
     y_train, y_test = y_train.reshape([-1,1]), y_test.reshape([-1,1])
 
-    train_info = train(x_train, y_train, n_iter=10000, learning_rate=0.001,hidden_size=13, batch_size=23, return_losses=True, return_weights=True, seed=180708)
+    train_info = train(x_train, y_train, n_iter=10000, learning_rate=0.001,hidden_size=13, batch_size=23, return_losses=True, return_weights=True, seed=180807)
     losses, weights = train_info
     #print(losses)
 
@@ -235,9 +244,11 @@ if __name__ == "__main__":
 
     """
     # for plotting losses
-    plt.plot(np.arange(1000), losses)
+    plt.plot(np.arange(10000), losses)
+    plt.show()
     """
 
+    """
     # for plotting predicted vs actual
     plt.xlabel("aredicted")
     plt.ylabel("Acutal")
@@ -247,9 +258,11 @@ if __name__ == "__main__":
     plt.scatter(predis, y_test)
     plt.plot([0,51], [0,51])
     plt.show()
+    """
 
     """
     for plotting most important feature vs target&prediction
+    """
     NUM = 40
     a = np.repeat(x_test[:,:-1].mean(axis=0,keepdims=True), NUM, axis=0)
     b = np.linspace(-1.5, 3.5, NUM).reshape(NUM, 1)
@@ -264,4 +277,3 @@ if __name__ == "__main__":
     plt.ylabel("Target/Predictions")
     plt.title("Most important feature vs. target and predictions,\n custom linear regression");
     plt.show()
-    """
