@@ -76,3 +76,44 @@ class ParamOperation(Operation):
         raise NotImplementedError
 
 
+class WeightMultiply(ParamOperation):
+    def __init__(self, w: ndarray):
+        super().__init__(w)
+
+    def _output(self) -> ndarray:
+        return np.dot(self.input_, self.param)
+
+    def _input_grad(self, output_grad: ndarray) -> ndarray:
+        return np.dot(output_grad, np.transpose(self.param, (1,0)))
+
+    def _param_grad(self, output_grad: ndarray) -> ndarray:
+        return np.dot(np.transpose(self.input_, (1,0)), output_grad)
+
+
+class BiasAdd(ParamOperation):
+    def __init__(self, b: ndarray):
+        assert b.shape[0] == 1
+        super().__init__(b)
+
+    def _output(self) -> ndarray:
+        return self.input_ + self.param
+
+    def _input_grad(self, output_grad: ndarray) -> ndarray:
+        return np.ones_like(self.input_) * output_grad
+
+    def _param_grad(self, output_grad: ndarray) -> ndarray:
+        param_grad = np.oneslike(self.input_) * output_grad
+        # reshape necessary?
+        return np.sum(param_grad, axis=0).reshape(1, param_grad.shape[1])
+
+
+class Sigmoid(Operation):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def _output(self) -> ndarray:
+        return 1.0 / (1.0 + np.exp(-1.0*self.input_))
+
+    def _input_grad(self, output_grad: ndarray) -> ndarray:
+        sigmoid_backward = self.output * (1.0 - self.output)
+        return sigmoid_backward * output_grad
