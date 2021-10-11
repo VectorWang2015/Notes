@@ -1,11 +1,49 @@
 import numpy as np
 
 from numpy import ndarray
-from typing import List
+from typing import List, Tuple
+
+from sklearn.datasets import load_boston
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+
+def permute_data(X, y):
+    perm = np.random.permutation(X.shape[0])
+    return X[perm], y[perm]
 
 
 def assert_same_shape(x: ndarray, y: ndarray) -> bool:
     return x.shape == y.shape
+
+
+def to_2d_np(a: ndarray, 
+          type: str="col") -> ndarray:
+    '''
+    Turns a 1D Tensor into 2D
+    '''
+
+    assert a.ndim == 1, \
+    "Input tensors must be 1 dimensional"
+    
+    if type == "col":        
+        return a.reshape(-1, 1)
+    elif type == "row":
+        return a.reshape(1, -1)
+
+
+def mae(y_true: ndarray, y_pred: ndarray):
+    '''
+    Compute mean absolute error for a neural network.
+    '''    
+    return np.mean(np.abs(y_true - y_pred))
+
+
+def rmse(y_true: ndarray, y_pred: ndarray):
+    '''
+    Compute root mean squared error for a neural network.
+    '''
+    return np.sqrt(np.mean(np.power(y_true - y_pred, 2)))
 
 
 class Operation(object):
@@ -104,7 +142,7 @@ class BiasAdd(ParamOperation):
         return np.ones_like(self.input_) * output_grad
 
     def _param_grad(self, output_grad: ndarray) -> ndarray:
-        param_grad = np.oneslike(self.input_) * output_grad
+        param_grad = np.ones_like(self.input_) * output_grad
         # reshape necessary?
         return np.sum(param_grad, axis=0).reshape(1, param_grad.shape[1])
 
@@ -119,6 +157,24 @@ class Sigmoid(Operation):
     def _input_grad(self, output_grad: ndarray) -> ndarray:
         sigmoid_backward = self.output * (1.0 - self.output)
         return sigmoid_backward * output_grad
+
+
+class Linear(Operation):
+    '''
+    "Identity" activation function
+    '''
+
+    def __init__(self) -> None:
+        '''Pass'''        
+        super().__init__()
+
+    def _output(self) -> ndarray:
+        '''Pass through'''
+        return self.input_
+
+    def _input_grad(self, output_grad: ndarray) -> ndarray:
+        '''Pass through'''
+        return output_grad
 
 
 class Layer(object):
@@ -144,6 +200,7 @@ class Layer(object):
             input_ = operation.forward(input_)
 
         self.output = input_
+        self._params()
 
         return self.output
 
@@ -188,7 +245,7 @@ class Dense(Layer):
 
         self.params.append(np.random.randn(1, self.neurons))
 
-        self.operaions = [WeightMultiply(self.params[0]),
+        self.operations = [WeightMultiply(self.params[0]),
                 BiasAdd(self.params[1]),
                 self.activation]
 
@@ -232,3 +289,173 @@ class MeanSquaredError(Loss):
 
     def _input_grad(self) -> ndarray:
         return 2.0 * (self.prediction - self.target) / self.prediction.shape[0]
+
+
+class NeuralNetwork(object):
+    def __init__(self, layers: List[Layer],
+            loss: Loss,
+            seed: float = 1):
+        self.layers = layers
+        self.loss = loss
+        self.seed = seed
+
+        if seed:
+            for layer in self.layers:
+                setattr(layer, "seed", self.seed)
+
+    def forward(self, x_batch: ndarray) -> ndarray:
+        x_out = x_batch
+        for layer in self.layers:
+            x_out = layer.forward(x_out)
+
+        return x_out
+
+    def backward(self, loss_grad: ndarray) -> None:
+        grad = loss_grad
+        for layer in reversed(self.layers):
+            grad = layer.backward(grad)
+
+        return None
+
+    def train_batch(self,
+            x_batch: ndarray,
+            y_batch: ndarray) -> float:
+        predictions = self.forward(x_batch)
+        loss = self.loss.forward(predictions, y_batch)
+        self.backward(self.loss.backward())
+
+        return loss
+
+    def params(self):
+        for layer in self.layers:
+            #print(layer)
+            #print(layer.params)
+            yield from layer.params
+
+    def param_grads(self):
+        for layer in self.layers:
+            yield from layer.param_grads
+
+
+class Optimizer(object):
+    def __init__(self,
+            lr: float = 0.01):
+        # each optimizer has an initial learn-rate
+        self.lr = lr
+
+    def step(self) -> None:
+        pass
+
+
+class SGD(Optimizer):
+    """
+    stochastic gradient descent
+    """
+    def __init__(self,
+            lr: float = 0.01) -> None:
+        super().__init__(lr)
+
+    def step(self):
+        for (param, param_grad) in zip(self.net.params(),
+                self.net.param_grads()):
+            param -= self.lr * param_grad
+
+
+class Trainer(object):
+    def __init__(self,
+            net: NeuralNetwork,
+            optim: Optimizer):
+        self.net = net
+        self.optim = optim
+        setattr(self.optim, "net", self.net)
+
+    def generate_batches(self,
+                         X: ndarray,
+                         y: ndarray,
+                         size: int = 32) -> Tuple[ndarray]:
+        '''
+        Generates batches for training 
+        '''
+        assert X.shape[0] == y.shape[0], \
+        '''
+        features and target must have the same number of rows, instead
+        features has {0} and target has {1}
+        '''.format(X.shape[0], y.shape[0])
+
+        N = X.shape[0]
+
+        for ii in range(0, N, size):
+            X_batch, y_batch = X[ii:ii+size], y[ii:ii+size]
+
+            yield X_batch, y_batch
+
+    def fit(self, x_train: ndarray, y_train: ndarray,
+            x_test: ndarray, y_test: ndarray,
+            epochs: int=100,
+            eval_every: int=10,
+            batch_size: int=32,
+            seed: int=1,
+            restart: bool=True) -> None:
+        np.random.seed(seed)
+
+        if restart:
+            for layer in self.net.layers:
+                layer.first = True
+
+        for e in range(epochs):
+
+            x_train, y_train = permute_data(x_train, y_train)
+
+            batch_generator = self.generate_batches(x_train, y_train, batch_size)
+
+            for ii, (x_batch, y_batch) in enumerate(batch_generator):
+                self.net.train_batch(x_batch, y_batch)
+                self.optim.step()
+
+            if (e+1) % eval_every == 0:
+                test_preds = self.net.forward(x_test)
+
+                loss = self.net.loss.forward(test_preds, y_test)
+                print(f"Validation loss after {e+1} epochs is {loss:.3f}")
+
+
+def eval_regression_model(model: NeuralNetwork,
+                          X_test: ndarray,
+                          y_test: ndarray):
+    '''
+    Compute mae and rmse for a neural network.
+    '''
+    preds = model.forward(X_test)
+    preds = preds.reshape(-1, 1)
+    print("Mean absolute error: {:.2f}".format(mae(preds, y_test)))
+    print()
+    print("Root mean squared error {:.2f}".format(rmse(preds, y_test)))
+
+
+if __name__ == "__main__":
+    deep_neural_network = NeuralNetwork(
+            layers=[Dense(neurons=13, activation=Sigmoid()),
+                Dense(neurons=13, activation=Sigmoid()),
+                Dense(neurons=1, activation=Linear())],
+            loss=MeanSquaredError(),
+            seed=20190501)
+
+    boston = load_boston()
+    data = boston.data
+    target = boston.target
+    features = boston.feature_names
+    s = StandardScaler()
+    data = s.fit_transform(data)
+    X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.3, random_state=80718)
+
+    # make target 2d array
+    y_train, y_test = to_2d_np(y_train), to_2d_np(y_test)
+
+    trainer = Trainer(deep_neural_network, SGD(lr=0.01))
+
+    trainer.fit(X_train, y_train, X_test, y_test,
+        epochs = 50,
+        eval_every = 10,
+        seed=20190501);
+    print()
+    eval_regression_model(deep_neural_network, X_test, y_test)
