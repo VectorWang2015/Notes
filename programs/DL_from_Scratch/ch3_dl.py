@@ -279,7 +279,7 @@ class Loss(object):
 
 
 class MeanSquaredError(Loss):
-    def __init__(self):
+    def __init__(self, normalize=False):
         super().__init__()
 
     def _output(self) -> float:
