@@ -70,6 +70,7 @@ if for interface
 | inet/inet6     | ip address                                   |
 | ether          | mac address                                  |
 | rx/tx          | statistics for data received and transmitted |
+
 #### ping
 in linux, ping will work continuously
 #### tracepath
