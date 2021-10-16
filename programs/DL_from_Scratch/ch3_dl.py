@@ -231,19 +231,26 @@ class Layer(object):
 class Dense(Layer):
     def __init__(self,
             neurons: int,
-            activation: Operation = Sigmoid()) -> None:
+            activation: Operation = Sigmoid(),
+            weight_init=None) -> None:
         super().__init__(neurons)
         self.activation = activation
+        self.weight_init = weight_init
 
     def _setup_layer(self, input_: ndarray) -> None:
         if self.seed:
             np.random.seed(self.seed)
 
+        if self.weight_init == "glorot":
+            scale = 2 / (input_.shape[1]+self.neurons)
+        else:
+            scale = 1.0
+
         self.params = []
 
-        self.params.append(np.random.randn(input_.shape[1], self.neurons))
+        self.params.append(np.random.randn(input_.shape[1], self.neurons)*scale)
 
-        self.params.append(np.random.randn(1, self.neurons))
+        self.params.append(np.random.randn(1, self.neurons)*scale)
 
         self.operations = [WeightMultiply(self.params[0]),
                 BiasAdd(self.params[1]),
@@ -401,6 +408,9 @@ class Trainer(object):
         if restart:
             for layer in self.net.layers:
                 layer.first = True
+                
+        setattr(self.optim, "max_epoch", epochs)
+        self.optim.setup_decay()
 
         for e in range(epochs):
 
@@ -411,6 +421,8 @@ class Trainer(object):
             for ii, (x_batch, y_batch) in enumerate(batch_generator):
                 self.net.train_batch(x_batch, y_batch)
                 self.optim.step()
+
+            self.optim.update_lr()
 
             if (e+1) % eval_every == 0:
                 test_preds = self.net.forward(x_test)

@@ -97,11 +97,31 @@ class Tanh(Operation):
 class SGDmomentum(Optimizer):
     def __init__(self,
             lr: float=0.01,
-            momentum: float=0.9):
+            momentum: float=0.9,
+            final_lr: float=0.005,
+            decay_type = None):
         super().__init__()
         self.lr = lr
+        self.final_lr = final_lr
         self.momentum = momentum
+        self.decay_type = decay_type
         self.first = True
+
+    def setup_decay(self):
+        if not self.decay_type:
+            return
+        elif self.decay_type == "exponential":
+            self.decay_per_epoch = np.power((self.final_lr/self.lr), 1 / (self.max_epoch-1))
+        elif self.decay_type == "linear":
+            self.decay_per_epoch = (self.lr-self.final_lr) / (self.max_epoch-1)
+
+    def update_lr(self):
+        if not self.decay_type:
+            return
+        elif self.decay_type == "exponential":
+            self.lr *= self.decay_per_epoch
+        elif self.decay_type == "linear":
+            self.lr -= self.decay_per_epoch
 
     def step(self) -> None:
         if self.first:
@@ -149,17 +169,19 @@ if __name__ == "__main__":
 
     model = NeuralNetwork(
     layers=[Dense(neurons=89,
-                  activation=Tanh()),
+                  activation=Tanh(),
+                  weight_init="glorot"),
             Dense(neurons=10,
-                  activation=Linear())],
+                  activation=Linear(),
+                  weight_init="glorot")],
             loss = SoftmaxCrossEntropyLoss(),
 seed=20190119)
 
-    optim = SGDmomentum(0.1, 0.9)
+    optim = SGDmomentum(0.2, 0.9, final_lr=0.05, decay_type="exponential")
     trainer = Trainer(model, optim)
     trainer.fit(x_train, train_labels, x_test, test_labels,
             epochs = 50,
-            eval_every = 1,
+            eval_every = 10,
             seed=20190119,
             batch_size=60);
     print()
