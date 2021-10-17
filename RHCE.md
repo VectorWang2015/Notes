@@ -17,7 +17,7 @@
 * set-time
 * set-timezone
 #### uname
-show kernel info  
+unix name, show kernel info  
 * a: all info, time is the time when the kernel is packaged
 
 ### process related commands
@@ -100,22 +100,26 @@ everything inside linux is a file
 | locate       | search in database          |
 | whereis      | binary, source, manual page |
 | which        | only find shell commands    |
+
 ##### find
 real time search  
 * -name: name for file name
 * -user: files that belong to the given user
+* -exec: execute the command after each search, {} for searched results
+e.g. `find -user linuxprobe -exec cp -a {} /root/findresults/ \;`  
 ##### locate
 will update database then search in database  
-can use updatedb to manualy update
+can use **updatedb** to manualy update
 1. cannot find all files
 2. faster than find
-#### file conetent
+#### file content
 | command | name                                               |
 |---------|----------------------------------------------------|
 | cat     | contatenate content of file to terminal            |
 | more    | cat in page mode, suitable for large files         |
 | head    | -n [num]: to show head num lines for file          |
 | tail    | similar to head, but tail lines, -f: to auto flush |
+
 to fetch middle lines of a file: use pipe  
 e.g. head -n 15 file | tail -n 5  
 to show line 10-15
@@ -134,7 +138,10 @@ show detailed file info
 | ATime | Access time, last time file accessed                              |
 | CTime | Change time, last time file attributes changed e.g. location,mode |
 | MTime | Modified time                                                     |
+
 #### grep
+* n: show nu
+* v: inverted
 print lines matching pattern
 #### cut
 divide text in columns and print
@@ -156,6 +163,9 @@ usually used to create text file
 #### dd
 convert and copy file  
 or copy with some conditions  
+this command can be used to copy blocks  
+for instance, copy from /dev/zero to create files of random size  
+copy from cdrom to create iso file  
 #### mv
 #### rm
 #### history
