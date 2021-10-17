@@ -12,7 +12,6 @@ def img_show(img):
     plt.imshow(img)
     plt.show()
 
-
 def softmax(input_: ndarray, axis=None) -> ndarray:
     """
     input_base = np.sum(np.exp(input_), axis=1)
@@ -87,14 +86,19 @@ class Tanh(Operation):
     def __init__(self) -> None:
         super().__init__()
 
-    def _output(self) -> ndarray:
+    def _output(self, inference) -> ndarray:
         return np.tanh(self.input_)
 
     def _input_grad(self, output_grad: ndarray) -> ndarray:
-        return (1 - np.power(self.output, 2)) * output_grad
+        """
+        two lines below show different results
+        not sure why
+        """
+        #return (1 - np.power(self.output,2)) * output_grad
+        return (1 - self.output * self.output) * output_grad
 
 
-class SGDmomentum(Optimizer):
+class SGDMomentum(Optimizer):
     def __init__(self,
             lr: float=0.01,
             momentum: float=0.9,
@@ -144,7 +148,7 @@ class SGDmomentum(Optimizer):
 
 
 def calc_accuracy_model(model, test_set):
-    return print(f'''The model validation accuracy is: {np.equal(np.argmax(model.forward(test_set, inference=True), axis=1), y_test).sum() * 100.0 / test_set.shape[0]:.2f}%''')
+    return print(f'''The model validation accuracy is: {np.equal(np.argmax(model.forward(test_set,inference=True), axis=1), y_test).sum() * 100.0 / test_set.shape[0]:.2f}%''')
 
 
 # Cuz the book doesn't provide a workable code for getting mnist
@@ -168,21 +172,26 @@ if __name__ == "__main__":
         test_labels[i][y_test[i]] = 1
 
     model = NeuralNetwork(
-    layers=[Dense(neurons=89,
-                  activation=Tanh(),
-                  weight_init="glorot"),
-            Dense(neurons=10,
-                  activation=Linear(),
-                  weight_init="glorot")],
-            loss = SoftmaxCrossEntropyLoss(),
-seed=20190119)
+    layers=[Dense(neurons=178, 
+                    activation=Tanh(),
+                    weight_init="glorot",
+                    dropout=0.8),
+                Dense(neurons=46, 
+                    activation=Tanh(),
+                    weight_init="glorot",
+                    dropout=0.8),
+                Dense(neurons=10, 
+                    activation=Linear(),
+                    weight_init="glorot")],
+                loss = SoftmaxCrossEntropy(), 
+    seed=20190119)
 
-    optim = SGDmomentum(0.2, 0.9, final_lr=0.05, decay_type="exponential")
-    trainer = Trainer(model, optim)
+    trainer = Trainer(model, SGDMomentum(0.2, momentum=0.9, final_lr = 0.05, decay_type='exponential'))
     trainer.fit(x_train, train_labels, x_test, test_labels,
-            epochs = 50,
-            eval_every = 10,
-            seed=20190119,
-            batch_size=60);
-    print()
-    #calc_accuracy_model(model, x_test)
+        epochs = 100,
+        eval_every = 10,
+        seed=20190119,
+        batch_size=60,
+        early_stopping=True);
+
+    calc_accuracy_model(model, x_test)

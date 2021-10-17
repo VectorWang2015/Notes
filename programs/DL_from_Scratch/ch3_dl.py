@@ -1,7 +1,9 @@
+#import pdb
 import numpy as np
 
 from numpy import ndarray
 from typing import List, Tuple
+from copy import deepcopy
 
 from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler
@@ -53,12 +55,13 @@ class Operation(object):
     def __init__(self):
         pass
 
-    def forward(self, input_: ndarray):
+    def forward(self, input_: ndarray, inference: bool=False):
         """
         store input into instance, call self._output
         """
         self.input_ = input_
-        self.output = self._output()
+        #pdb.set_trace()
+        self.output = self._output(inference)
         return self.output
 
     def backward(self, output_grad: ndarray) -> ndarray:
@@ -71,7 +74,7 @@ class Operation(object):
         assert_same_shape(self.input_, self.input_grad)
         return self.input_grad
 
-    def _output(self) -> ndarray:
+    def _output(self, inference:bool) -> ndarray:
         """
         each operation should have a _output method
         """
@@ -116,11 +119,29 @@ class ParamOperation(Operation):
         raise NotImplementedError
 
 
+class Dropout(Operation):
+    def __init__(self,
+            keep_prob: float=0.8):
+        super().__init__()
+        self.keep_prob = keep_prob
+
+    def _output(self, inference:bool) -> ndarray:
+        if inference:
+            return self.input_ * self.keep_prob
+        else:
+            self.mask = np.random.binomial(1, self.keep_prob,
+                    size=self.input_.shape)
+            return self.input_ * self.mask
+
+    def _input_grad(self, output_grad: ndarray) -> ndarray:
+        return output_grad * self.mask
+
+
 class WeightMultiply(ParamOperation):
     def __init__(self, w: ndarray):
         super().__init__(w)
 
-    def _output(self) -> ndarray:
+    def _output(self, inference) -> ndarray:
         return np.dot(self.input_, self.param)
 
     def _input_grad(self, output_grad: ndarray) -> ndarray:
@@ -135,7 +156,7 @@ class BiasAdd(ParamOperation):
         assert b.shape[0] == 1
         super().__init__(b)
 
-    def _output(self) -> ndarray:
+    def _output(self, inference) -> ndarray:
         return self.input_ + self.param
 
     def _input_grad(self, output_grad: ndarray) -> ndarray:
@@ -151,7 +172,7 @@ class Sigmoid(Operation):
     def __init__(self) -> None:
         super().__init__()
 
-    def _output(self) -> ndarray:
+    def _output(self, inference) -> ndarray:
         return 1.0 / (1.0 + np.exp(-1.0*self.input_))
 
     def _input_grad(self, output_grad: ndarray) -> ndarray:
@@ -168,7 +189,7 @@ class Linear(Operation):
         '''Pass'''        
         super().__init__()
 
-    def _output(self) -> ndarray:
+    def _output(self, inference) -> ndarray:
         '''Pass through'''
         return self.input_
 
@@ -189,7 +210,7 @@ class Layer(object):
     def _setup_layer(self, num_in: int) -> None:
         raise NotImplementedError
 
-    def forward(self, input_: ndarray) -> ndarray:
+    def forward(self, input_: ndarray, inference=False) -> ndarray:
         if self.first:
             self._setup_layer(input_)
             self.first = False
@@ -197,7 +218,7 @@ class Layer(object):
         self.input_ = input_
 
         for operation in self.operations:
-            input_ = operation.forward(input_)
+            input_ = operation.forward(input_, inference)
 
         self.output = input_
         self._params()
@@ -232,9 +253,11 @@ class Dense(Layer):
     def __init__(self,
             neurons: int,
             activation: Operation = Sigmoid(),
-            weight_init=None) -> None:
+            dropout: float=1.0,
+            weight_init="standard") -> None:
         super().__init__(neurons)
         self.activation = activation
+        self.dropout = dropout
         self.weight_init = weight_init
 
     def _setup_layer(self, input_: ndarray) -> None:
@@ -256,6 +279,8 @@ class Dense(Layer):
                 BiasAdd(self.params[1]),
                 self.activation]
 
+        if self.dropout:
+            self.operations.append(Dropout(self.dropout))
         return None
 
 
@@ -310,10 +335,10 @@ class NeuralNetwork(object):
             for layer in self.layers:
                 setattr(layer, "seed", self.seed)
 
-    def forward(self, x_batch: ndarray) -> ndarray:
+    def forward(self, x_batch: ndarray, inference: bool=False) -> ndarray:
         x_out = x_batch
         for layer in self.layers:
-            x_out = layer.forward(x_out)
+            x_out = layer.forward(x_out, inference)
 
         return x_out
 
@@ -326,8 +351,9 @@ class NeuralNetwork(object):
 
     def train_batch(self,
             x_batch: ndarray,
-            y_batch: ndarray) -> float:
-        predictions = self.forward(x_batch)
+            y_batch: ndarray,
+            inference: bool=False) -> float:
+        predictions = self.forward(x_batch, inference)
         loss = self.loss.forward(predictions, y_batch)
         self.backward(self.loss.backward())
 
@@ -402,17 +428,23 @@ class Trainer(object):
             eval_every: int=10,
             batch_size: int=32,
             seed: int=1,
-            restart: bool=True) -> None:
+            restart: bool=True,
+            early_stopping: bool=True) -> None:
         np.random.seed(seed)
 
         if restart:
             for layer in self.net.layers:
                 layer.first = True
+
+            self.best_loss = 1e9
                 
         setattr(self.optim, "max_epoch", epochs)
         self.optim.setup_decay()
 
         for e in range(epochs):
+
+            if (e+1) % eval_every == 0:
+                last_model = deepcopy(self.net)
 
             x_train, y_train = permute_data(x_train, y_train)
 
@@ -425,10 +457,22 @@ class Trainer(object):
             self.optim.update_lr()
 
             if (e+1) % eval_every == 0:
-                test_preds = self.net.forward(x_test)
-
+                test_preds = self.net.forward(x_test, inference=True)
                 loss = self.net.loss.forward(test_preds, y_test)
-                print(f"Validation loss after {e+1} epochs is {loss:.3f}")
+
+                if early_stopping:
+                    if self.best_loss < loss:
+                        print()
+                        print(f"Loss increased afer epoch {e+1}, final loss:{self.best_loss:.3f},",
+                                f"\nusing the model from epoch {e+1-eval_every}")
+                        self.net = last_model
+                        setattr(self.optim, 'net', self.net)
+                        break
+                    else:
+                        print(f"Validation loss after {e+1} epochs is {loss:.3f}")
+                        self.best_loss = loss
+                else:
+                    print(f"Validation loss after {e+1} epochs is {loss:.3f}")
 
 
 def eval_regression_model(model: NeuralNetwork,
