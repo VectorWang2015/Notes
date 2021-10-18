@@ -180,3 +180,62 @@ collect and pack system info
 * czvf: pack, c for create, z for gzip, v for visualize, f for file
 * xzvf: unpack, x for extract
 z is not necessary now, tar can automatically distinguish file type
+
+## chapter 3
+
+### 输入重定向
+* 清空输入重定向 <
+* 追加输入重定向 <<
+
+### 输出重定向
+
+* 清空 >
+* 追加 >>
+
+1. 标准 1>
+2. 错误 2>
+3. 不加以区分 &>
+
+### shell变量操作
+| sign   | description        |
+|--------|--------------------|
+| =      | 赋值               |
+| $      | 取变量值           |
+| $$     | 取pid              |
+| \|     | 管道符             |
+| *      | 全通配             |
+| ?      | 匹配任意一位       |
+| ^      | 开头               |
+| $      | 结尾               |
+| []     | 里面的任一字符     |
+| {}     | 序列,显示报错      |
+| ""     | str                |
+| ''     | 全局转义字符串     |
+| ``     | 执行命令并返回结果 |
+| alias  | 设置别名           |
+| type   | 查看命令类型       |
+| unset  | 取消变量           |
+| export | 导出为全局变量     |
+
+**通配符由shell先解释再执行**  
+e.g.  
+```
+echo 123456 | passwd --stdin linuxprobe
+# 更改linuxprobe用户的密码为123456
+# history可以看到明文
+```
+
+### shell优先级
+从高到低  
+1. 绝对路径的执行命令
+2. 别名命令
+3. 内部命令
+4. 外部命令
+
+### 常用shell变量
+* HOME
+* SHELL
+* HISTSIZE
+* LANG
+* RANDOM 生成随机uint
+* PSI 提示符
