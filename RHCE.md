@@ -184,8 +184,8 @@ z is not necessary now, tar can automatically distinguish file type
 ## chapter 3
 
 ### 输入重定向
-* 清空输入重定向 <
-* 追加输入重定向 <<
+* 清空输入重定向 < 文件
+* 从标准输入读入,直到分界符 << 分界符
 
 ### 输出重定向
 
@@ -216,6 +216,7 @@ z is not necessary now, tar can automatically distinguish file type
 | type   | 查看命令类型       |
 | unset  | 取消变量           |
 | export | 导出为全局变量     |
+| tee    | 保存至文件         |
 
 **通配符由shell先解释再执行**  
 e.g.  
