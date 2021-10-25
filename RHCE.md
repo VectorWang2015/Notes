@@ -239,3 +239,74 @@ echo 123456 | passwd --stdin linuxprobe
 * LANG
 * RANDOM 生成随机uint
 * PSI 提示符
+
+### shell 脚本
+最基本的shell脚本可以视作命令的堆砌  
+其改良有如下两个方向:  
+
+1. 耳朵,接收
+2. 大脑,判断
+
+其中,1可以通过传递参数实现,如下  
+
+| 变量 | 内容                    |
+|------|-------------------------|
+| $#   | 参数个数                |
+| $0   | 脚本本身的名称          |
+| $1   | 传递给脚本的第一个参数  |
+| $*   | 全部参数                |
+| $@   | 全部参数,不过是分开传递 |
+
+2可以通过条件语句等实现  
+
+#### shell基本运算
+
+1. 算术运算符
+2. 关系运算符
+3. 布尔运算符
+4. 字符串运算符
+5. 文件测试运算符
+
+原生bash不支持简单的数学运算,但可以通过其它命令比如expr,awk实现  
+
+关系运算符  
+| expr | meaning          |
+|------|------------------|
+| -eq  | equal            |
+| -ne  | not equal        |
+| -gt  | greater than     |
+| -lt  | less than        |
+| -ge  | greater or equal |
+| -le  | less or equal    |
+
+布尔运算符  
+| expr | meaning |
+|------|---------|
+| !    | not     |
+| -a   | and     |
+| -o   | or      |
+
+逻辑运算符  
+&&,||
+
+```
+if [ $VALA -eq 10 -a $VALB -eq 20]; then
+	# do sth
+fi
+
+
+if [[ $VALA -eq 10 && $VALB -eq 20]]; then
+	# do sth
+fi
+```
+
+字符串操作  
+| expr | meaning                              |
+|------|--------------------------------------|
+| =    | judge if strings are equal           |
+| !=   | judge if strings are not equal       |
+| -z   | judge if string's length is zero     |
+| -n   | judge if string's length is not zero |
+| $    | judge if string is null              |
+
+test,[属于bash内置命令,而[[属于bash关键字,所以[[可以使用通配符
