@@ -240,6 +240,7 @@ echo 123456 | passwd --stdin linuxprobe
 * RANDOM 生成随机uint
 * PSI 提示符
 
+## chapter 4
 ### shell 脚本
 最基本的shell脚本可以视作命令的堆砌  
 其改良有如下两个方向:  
@@ -287,7 +288,7 @@ echo 123456 | passwd --stdin linuxprobe
 | -o   | or      |
 
 逻辑运算符  
-&&,||
+&&,||  
 
 ```
 if [ $VALA -eq 10 -a $VALB -eq 20]; then
@@ -299,6 +300,22 @@ if [[ $VALA -eq 10 && $VALB -eq 20]]; then
 	# do sth
 fi
 ```
+
+shell中使用这两个符号时,注意也可以表示为前一语句执行成功才执行后一语句;前一语句执行失败才执行后一语句  
+
+```
+[ ! $USER = root ] && echo "user" || echo root
+```
+
+文件测试
+| expr | meaning                           |
+|------|-----------------------------------|
+| -d   | check if is dir                   |
+| -e   | check if exists                   |
+| -f   | check if is normal file           |
+| -r   | check if current user can read    |
+| -w   | check if current user can write   |
+| -x   | check if current user can execute |
 
 字符串操作  
 | expr | meaning                              |
@@ -367,3 +384,33 @@ case $I in
 		;;
 esac
 ```
+
+### 计划任务
+
+* 一次性: at
+* 多次性: crond服务
+
+
+#### at
+echo "命令字符串" | at [time]  
+
+```
+echo "reboot" | at +2 MINUTE
+echo "reboot" | at 19:00
+```
+
+删除可用atrm  
+
+#### crond
+服务采用crontab进行配置  
+```
+minute hour date month weekday command
+*      *    *    *     *       [command]
+*/2    # every two minute
+1-5    # at 1,2,3,4 or 5 minute
+1,2    # at 1 or 2 minute
+```
+
+* 建议不要直接修改配置文件,因为crontab会进行检查  
+* 命令使用绝对路径
+
