@@ -240,3 +240,178 @@ echo 123456 | passwd --stdin linuxprobe
 * LANG
 * RANDOM 生成随机uint
 * PSI 提示符
+
+## chapter 4
+### shell 脚本
+最基本的shell脚本可以视作命令的堆砌  
+其改良有如下两个方向:  
+
+1. 耳朵,接收
+2. 大脑,判断
+
+其中,1可以通过传递参数实现,如下  
+
+| 变量 | 内容                    |
+|------|-------------------------|
+| $#   | 参数个数                |
+| $0   | 脚本本身的名称          |
+| $1   | 传递给脚本的第一个参数  |
+| $*   | 全部参数                |
+| $@   | 全部参数,不过是分开传递 |
+
+2可以通过条件语句等实现  
+
+#### shell基本运算
+
+1. 算术运算符
+2. 关系运算符
+3. 布尔运算符
+4. 字符串运算符
+5. 文件测试运算符
+
+原生bash不支持简单的数学运算,但可以通过其它命令比如expr,awk实现  
+
+关系运算符  
+| expr | meaning          |
+|------|------------------|
+| -eq  | equal            |
+| -ne  | not equal        |
+| -gt  | greater than     |
+| -lt  | less than        |
+| -ge  | greater or equal |
+| -le  | less or equal    |
+
+布尔运算符  
+| expr | meaning |
+|------|---------|
+| !    | not     |
+| -a   | and     |
+| -o   | or      |
+
+逻辑运算符  
+&&,||  
+
+```
+if [ $VALA -eq 10 -a $VALB -eq 20]; then
+	# do sth
+fi
+
+
+if [[ $VALA -eq 10 && $VALB -eq 20]]; then
+	# do sth
+fi
+```
+
+shell中使用这两个符号时,注意也可以表示为前一语句执行成功才执行后一语句;前一语句执行失败才执行后一语句  
+
+```
+[ ! $USER = root ] && echo "user" || echo root
+```
+
+文件测试
+| expr | meaning                           |
+|------|-----------------------------------|
+| -d   | check if is dir                   |
+| -e   | check if exists                   |
+| -f   | check if is normal file           |
+| -r   | check if current user can read    |
+| -w   | check if current user can write   |
+| -x   | check if current user can execute |
+
+字符串操作  
+| expr | meaning                              |
+|------|--------------------------------------|
+| =    | judge if strings are equal           |
+| !=   | judge if strings are not equal       |
+| -z   | judge if string's length is zero     |
+| -n   | judge if string's length is not zero |
+| $    | judge if string is null              |
+
+test,[属于bash内置命令,而[[属于bash关键字,所以[[可以使用通配符,以及数学运算  
+
+#### shell流程控制
+```
+#!/bin/bash
+
+for I in 1 2 3
+do
+	echo $I
+done
+
+for ((I=1;I<=3;I++))
+do 
+	echo $I
+done
+
+I=1
+while [[ $I -le 3 ]]
+do
+	echo $I
+	I=`expr $I + 1`
+done
+
+I=1
+until [ $I -gt 3 ]; do
+	echo $I
+	I=`expr $I + 1`
+done
+
+echo "I is $I"
+if [ $I -eq 1 ]
+then
+	echo "I is 1"
+elif [ $I -eq 2 ]
+then
+	echo "I is 2"
+elif [ $I -eq 3 ]
+then
+	echo "I is 3"
+else
+	echo "I is greater than 3"
+fi
+
+case $I in
+	1)
+		echo "I is 1"
+		;;
+	2)
+		echo "I is 2"
+		;;
+	3)
+		echo "I is 3"
+		;;
+	*)
+		echo "I is not 1, 2 or 3"
+		;;
+esac
+```
+
+### 计划任务
+
+* 一次性: at
+* 多次性: crond服务
+
+
+#### at
+echo "命令字符串" | at [time]  
+
+```
+echo "reboot" | at +2 MINUTE
+echo "reboot" | at 19:00
+```
+
+删除可用atrm  
+
+#### crond
+服务采用crontab进行配置  
+```
+minute hour date month weekday command
+*      *    *    *     *       [command]
+*/2    # every two minute
+1-5    # at 1,2,3,4 or 5 minute
+1,2    # at 1 or 2 minute
+```
+
+* 建议不要直接修改配置文件,因为crontab会进行检查  
+* 命令使用绝对路径
+
