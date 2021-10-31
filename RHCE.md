@@ -502,3 +502,28 @@ getfacl 不能使用绝对路径
 getfacl -R [dirname] > backup.acl
 setfacl --restore backup.acl
 ```
+
+### su命令，sudo服务
+
+```
+su - [username]
+```
+\-的意思是完全切换  
+
+有时候会存在如下情况：  
+
+1. 不想给root密码（su）
+2. 不想给全部授权（su）
+3. 不想所有用户均由对一个命令的授权（suid）
+
+所以采用sudo服务对管理员授权进行控制。  
+```
+visudo
+```
+注：**建议写至100行以后**  
+
+用户名     访问域 使用谁的身份 可执行命令（**绝对路径**）  
+[username] ALL =  (ALL)         ALL  
+
+1. 逗号，而不要用ALL指定命令
+2. 不要授权文件查看和编辑命令如cat，vim
