@@ -476,7 +476,7 @@ linux中文件的权限如下：
 命令：  
 
 ```
-chomod：chomod -R 777 文件，chmod o+t 文件
+chmod：chmod -R 777 文件，chmod o+t 文件
 chown：chown [-R] 所有者:所有组 文件
 ```
 
@@ -527,3 +527,50 @@ visudo
 
 1. 逗号，而不要用ALL指定命令
 2. 不要授权文件查看和编辑命令如cat，vim
+
+## chapter 6
+
+### 概述
+
+linux中一切都是文件，且一切文件都是从根目录开始的，按照文件系统层次标准(FHS)采用树状结构来存放，并定义了常见目录的用途。  
+| dir    | content                                 |
+|--------|-----------------------------------------|
+| /boot  | kernel,startup menu and configs         |
+| /dev   | store devices and interfaces files      |
+| /etc   | config files                            |
+| /home  | home dir for users                      |
+| /root  | home dir for root                       |
+| /media | mounted devs                            |
+| /tmp   | "share" dir                             |
+| /var   | files that alter often, e.g.  logs      |
+| /bin   |                                         |
+| /sbin  | binary files for startup use            |
+| /lib   | func libs thta /bin /sbin commands call |
+
+linux系统中，文件系统信息写入super block中。每个文件有一个inode记录权限与属性等记录，而实际文件存放在block中。  
+  
+物理设备 -> 分区 -> 格式化 -> 挂载
+
+### 物理设备
+
+系统内核中udev设备管理器会自动把硬件名称规范起来。  
+| dev              | file_name |
+|------------------|-----------|
+| IDE              | hd[a-d]   |
+| SCSI/SATA/U-disk | sd[a-z]   |
+| virtio           | vd[a-z]   |
+| floppy disk      | fd[0-1]   |
+| cdrom            | cdrom     |
+| printer          | lp[0-15]  |
+
+硬盘的主分区或拓展分区编号从1到4，逻辑分区编号从5开始。  
+
+<p align="center"><img src="./img/linux-harddisk.png"></img></p>
+
+扇区大小512B，除主引导记录（MBR）外仅能存放4个分区信息，若分区信息指向分区，则为主分区，若指向存放存放分区信息的扇区，则为拓展分区。拓展分区内存放的是逻辑分区的信息。  
+
+### 文件系统
+
+ext4与xfs比较常用，二者均为日志文件系统。  
+
+<p align="center"><img src="./img/linux-vfs.jpg" width=500></img></p>
