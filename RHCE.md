@@ -574,3 +574,47 @@ linux系统中，文件系统信息写入super block中。每个文件有一个i
 ext4与xfs比较常用，二者均为日志文件系统。  
 
 <p align="center"><img src="./img/linux-vfs.jpg" width=500></img></p>
+
+### 磁盘操作
+| 操作                   | 指令      | 说明                                   |
+|------------------------|-----------|----------------------------------------|
+| 查询设备信息           | blkid     | UUID 类型等                            |
+| 分区管理               | fdisk     | fdisk -l                               |
+| 格式化                 | mkfs      | mkfs.xx xx为格式信息 如mkfs.xfs        |
+| 交换区格式化           | mkswap    |                                        |
+| 激活交换分区           | swapon    | 重启不保留，需要修改fstab              |
+| 挂载                   | mount     | -a 挂载fstab 开机自动挂载修改fstab即可 |
+| 卸载                   | umount    | 后跟挂载目录或设备文件均可             |
+| 查询挂载设备信息       | df        | -h 人类可读 -T 类型 显示挂载设备及容量 |
+| 查看已挂载设备使用情况 | lsblk     | 树状图显示                             |
+| 分区信息同步到内核     | partprobe | 用于fdisk分区后/dev中没有设备文件      |
+| 查看文件占用           | du        | -s 摘要 -h 人类可读 e.g. du -sh /*     |
+
+/etc/fstab：  
+fstab字段含义如下：  
+设备文件（或UUID）	挂载目录	格式类型（如xfs，iso9660）	权限选项（defaults）	备份（0为不备份）	自检（0为不自检）  
+特别注意：网络存储设备权限选项要加上_netdev，这样系统会在联网后再挂载  
+
+### 磁盘容量配额
+针对用户或组限制最大硬盘空间或最大文件数。  
+使用quota技术，限制分为两种：  
+
+1. 软限制，到达限制时会提示用户
+2. 硬限制，到达限制时会提示用户，且强行终止用户操作
+
+RHEL8系统中已经安装了quota服务，但默认没有开启。若要开启，**fstab中给挂载设备加上uquota项并重启**。  
+
+| bsoft | isoft |
+|-------|-------|
+| bhard | ihard |
+
+bsoft: block soft, ihard: inode hard etc.  
+
+针对xfs文件系统，可以使用xfs_quota来设置quota，一个典型示例如下：  
+```
+xfs_quota -x -c 'limit bsoft=3m bhard=6m isoft=3 ihard=6 tom' /boot
+```
+其中x为专家模式，c为参数形式设置。  
+
+此外，可以使用edquota来管理磁盘配额。  
+-u 针对用户，-g 针对组...  
