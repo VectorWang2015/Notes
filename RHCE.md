@@ -576,19 +576,20 @@ ext4与xfs比较常用，二者均为日志文件系统。
 <p align="center"><img src="./img/linux-vfs.jpg" width=500></img></p>
 
 ### 磁盘操作
-| 操作                   | 指令      | 说明                                   |
-|------------------------|-----------|----------------------------------------|
-| 查询设备信息           | blkid     | UUID 类型等                            |
-| 分区管理               | fdisk     | fdisk -l                               |
-| 格式化                 | mkfs      | mkfs.xx xx为格式信息 如mkfs.xfs        |
-| 交换区格式化           | mkswap    |                                        |
-| 激活交换分区           | swapon    | 重启不保留，需要修改fstab              |
-| 挂载                   | mount     | -a 挂载fstab 开机自动挂载修改fstab即可 |
-| 卸载                   | umount    | 后跟挂载目录或设备文件均可             |
-| 查询挂载设备信息       | df        | -h 人类可读 -T 类型 显示挂载设备及容量 |
-| 查看已挂载设备使用情况 | lsblk     | 树状图显示                             |
-| 分区信息同步到内核     | partprobe | 用于fdisk分区后/dev中没有设备文件      |
-| 查看文件占用           | du        | -s 摘要 -h 人类可读 e.g. du -sh /*     |
+
+| 操作                         | 指令      | 说明                                   |
+|------------------------------|-----------|----------------------------------------|
+| 查询设备信息                 | blkid     | UUID 类型等                            |
+| 分区管理                     | fdisk     | fdisk -l                               |
+| 格式化                       | mkfs      | mkfs.xx xx为格式信息 如mkfs.xfs        |
+| 交换区格式化                 | mkswap    |                                        |
+| 激活交换分区                 | swapon    | 重启不保留，需要修改fstab              |
+| 挂载                         | mount     | -a 挂载fstab 开机自动挂载修改fstab即可 |
+| 卸载                         | umount    | 后跟挂载目录或设备文件均可             |
+| 查询挂载设备（文件系统）信息 | df        | -h 人类可读 -T 类型 显示挂载设备及容量 |
+| 查看已挂载设备使用情况       | lsblk     | 树状图显示                             |
+| 分区信息同步到内核           | partprobe | 用于fdisk分区后/dev中没有设备文件      |
+| 查看文件占用                 | du        | -s 摘要 -h 人类可读 e.g. du -sh /*     |
 
 /etc/fstab：  
 fstab字段含义如下：  
@@ -596,6 +597,7 @@ fstab字段含义如下：
 特别注意：网络存储设备权限选项要加上_netdev，这样系统会在联网后再挂载  
 
 ### 磁盘容量配额
+
 针对用户或组限制最大硬盘空间或最大文件数。  
 使用quota技术，限制分为两种：  
 
@@ -618,3 +620,29 @@ xfs_quota -x -c 'limit bsoft=3m bhard=6m isoft=3 ihard=6 tom' /boot
 
 此外，可以使用edquota来管理磁盘配额。  
 -u 针对用户，-g 针对组...  
+
+### VDO虚拟数据优化
+
+VDO（virtual data optimize），通过压缩或删重来优化存储空间，可以部署在文件系统下作为附加存储层使用。  
+
+<p align="center"><img src="./img/linux-vdo.jpg" width=300></img></p>
+
+在部署虚拟机或容器时，建议采用逻辑存储与物理存储为10∶1的比例进行配置，即1TB物理存储对应10TB逻辑存储；而部署对象存储时 （例如使用Ceph）则采用逻辑存储与物理存储为3∶1的比例进行配置，即使用1TB物理存储对应3TB逻辑存储。  
+一个vdo参考部署如下：  
+```
+# add vdo logical storage
+vdo create --name=storage --device=/dev/sdc --vdoLogicalSize=200G
+# check status
+vdo status --name=storage
+vdostats --human-readable
+```
+vdo逻辑存储可以作为设备格式化和挂载，其设备文件在/dev/mapper下，可以使用df查看占用（逻辑）。  
+
+### 链接
+软硬链接  
+
+```
+ln [-s] src target
+```
+
+<p align="center"><img src="./img/linux-ln.jpg" width=500></img></p>
