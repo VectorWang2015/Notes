@@ -679,6 +679,7 @@ mdadm -a [device]
 一切完成后可以正常将raid格式化和挂载，就像操作普通硬盘分区。  
 
 #### 删除raid
+
 再raid卸载（umount）后，先将raid中的硬盘设置为错误状态，再逐个移出，最后--stop整个阵列：  
 ```
 mdadm -f [devices]
@@ -687,3 +688,76 @@ mdadm --stop [raid file name]
 ```
 
 ### LVM
+
+LVM（logical volume manager），通过将物理卷看作资源池，在其上划分逻辑卷，以实现动态的扩容缩容。  
+| 功能 | physical volume | volume group | logical volume |
+|------|-----------------|--------------|----------------|
+| 扫描 | pvscan          | vgscan       | lvscan         |
+| 建立 | pvcreate        | vgcreate     | lvcreate       |
+| 显示 | pvdisplay       | vgdisplay    | lvdisplay      |
+| 删除 | pvremove        | vgremove     | lvremove       |
+| 扩展 |                 | vgextend     | lvextend       |
+| 缩小 |                 | vgreduce     | lvreduce       |
+
+注意：逻辑卷**不应格式化为xfs格式**，因为xfs格式不支持缩小，且自带扩容xfs_growfs  
+
+#### lvm创建
+
+首先声明存储设备为pv，然后创建vg作为存储资源池，再从资源池内划分部分作为lv  
+```
+pvcreate [device name]
+vgcreate [vg name] [pv device names]
+lvcreate -n [lv name] -L [size] [vg name]
+```
+
+逻辑卷位置在/dev/[vg name]/[lv name]  
+随后便可以正常格式化和挂载  
+
+#### lv扩容
+
+首先要**卸载**lv，然后使用lvextend扩容，随后检查文件系统完整性，最后重置文件系统容量：  
+```
+umount [lv file]
+
+lvextend -L [new size] [lv file]
+
+# -f for force checking even if marked clean
+# ext 2/3/4 file system checker
+e2fsck -f [lv file]
+
+# resizer for ext 2/3/4 file system
+resize2fs [lv file]
+```
+
+之后就可以重新挂载使用。  
+
+#### lv缩容
+
+与扩容不同，应先检查文件系统完整性，文件系统缩容，再逻辑卷缩容：  
+```
+umount [lv file]
+
+e2fsck -f [lv file]
+resize2fs [lv file] [new size]
+
+lvreduce -L [new size] [lv file]
+```
+
+#### lv快照
+1. 快照容量必须等同逻辑卷容量
+2. 快照卷仅有效一次，执行还原后会被删除
+
+拍摄快照时不需要卸载：  
+```
+# -s for snap -n for name
+lvcreate -L [size] -s -n [snapname] [lv file]
+```
+
+恢复快照时需要卸载，不需要指明要恢复的逻辑卷，系统会自动分辨：  
+```
+umount [lv file]
+lvconvert --merge [snap file]
+```
+
+#### lvm删除
+依次删除lv，vg，pv  
