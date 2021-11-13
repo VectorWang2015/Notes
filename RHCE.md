@@ -646,3 +646,44 @@ ln [-s] src target
 ```
 
 <p align="center"><img src="./img/linux-ln.jpg" width=500></img></p>
+
+## chapter 6
+
+### Raid
+
+常见raid：  
+* 0
+* 1 备份
+* 5 轮流存储奇偶校验
+* 10 raid 1，然后raid 0
+
+RHEL中使用mdadm（multi device admin）命令来管理管理raid。  
+
+#### 创建raid
+
+```
+mdadm -Cv [raid file name] -n [num] -l [raid type] -x [num] [devices]
+```
+\-C为create，v为过程可视化，n为指定组成raid的数量，l为raid类型，x为热备盘数量  
+命令执行完后可能需要时间来初始化等，可以使用：  
+```
+mdadm -D [raid file name]
+```
+来查看raid目前状态。  
+
+当需要往raid中填加磁盘时，可以使用：  
+```
+mdadm -a [device]
+```
+
+一切完成后可以正常将raid格式化和挂载，就像操作普通硬盘分区。  
+
+#### 删除raid
+再raid卸载（umount）后，先将raid中的硬盘设置为错误状态，再逐个移出，最后--stop整个阵列：  
+```
+mdadm -f [devices]
+mdadm -r [devices]
+mdadm --stop [raid file name]
+```
+
+### LVM
