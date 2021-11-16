@@ -761,3 +761,17 @@ lvconvert --merge [snap file]
 
 #### lvm删除
 依次删除lv，vg，pv  
+
+## chapter 7
+
+### 网卡配置
+#### cockpit
+```
+# ensure cockpit is installed
+dnf install cockpit
+# start cockpit
+systemctl start cockpit
+# enable cockpit socket
+systemctl enable cockpit.socket
+```
+然后访问本机地址的9090端口就可以网页显示cockpit  
