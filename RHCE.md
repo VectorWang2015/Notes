@@ -422,7 +422,7 @@ minute hour date month weekday command
 uid0：root  
 uid1-999：系统用户，linux系统服务多半使用独立系统用户运行，以保证控制被害  
 uid1000-：普通用户  
-  
+
 每个用户都有基本组与扩展组，基本组在创建用户时即创建，只有用户一个组员，往往与用户同名。  
 扩展组则是后天指定的。  
 
@@ -548,7 +548,7 @@ linux中一切都是文件，且一切文件都是从根目录开始的，按照
 | /lib   | func libs thta /bin /sbin commands call |
 
 linux系统中，文件系统信息写入super block中。每个文件有一个inode记录权限与属性等记录，而实际文件存放在block中。  
-  
+
 物理设备 -> 分区 -> 格式化 -> 挂载
 
 ### 物理设备
@@ -647,7 +647,7 @@ ln [-s] src target
 
 <p align="center"><img src="./img/linux-ln.jpg" width=500></img></p>
 
-## chapter 6
+## chapter 7
 
 ### Raid
 
@@ -762,9 +762,33 @@ lvconvert --merge [snap file]
 #### lvm删除
 依次删除lv，vg，pv  
 
-## chapter 7
+## chapter 8
 
 ### 网卡配置
+
+#### 使用配置文件
+
+/etc/sysconfig/net......scripts/ifcfg-[网卡名]  
+如果没有改文件，应先使用ifconfig查询网卡名，再手动添加  
+更改后要通知相关服务重读配置，再启用网卡。  
+```
+nmcli connection reload
+nmcli connection up [if name]
+```
+
+#### nmtui（推荐）
+
+Network Manager Text UI  
+图形化配置，配置结束后要手动up网卡。  
+
+#### nm-connection-editor
+
+类似，配置结束后要手动up。需要系统图形化界面支持。  
+
+#### 系统设置
+
+无需手动up。  
+
 #### cockpit
 ```
 # ensure cockpit is installed
@@ -775,3 +799,67 @@ systemctl start cockpit
 systemctl enable cockpit.socket
 ```
 然后访问本机地址的9090端口就可以网页显示cockpit  
+
+### 防火墙配置
+
+防火墙大致需要注意三条链：INPUT，OUTPUT，FORWARD  
+在RHEL8中，防火墙的配置可以使用：  
+1. iptables
+2. firewalld服务
+
+#### iptables（不推荐）
+
+iptables针对数据链路层，会维护一张规则表，其中靠上的规则会优先执行。  
+针对数据的策略，大致可以分为：
+1. ACCEPT
+2. DROP 拒绝，无回显
+3. REJECT 拒绝，有回显
+4. LOG
+
+RHCE认证考试时应使用REJECT，不然无从得知是网卡配置问题还是数据包被无视。  
+常用参数：  
+| 参数 | 功能                     |
+|------|--------------------------|
+| -L   | 查看规则                 |
+| -F   | 清空规则                 |
+| -I   | 在头部插入规则（高优先） |
+| -A   | 尾插规则（低优先）       |
+
+注意：iptables的规则更改是runtime，需要使用iptables-save以让其重启后保持生效。  
+
+#### firewalld服务
+
+该服务以zone（区域）的概念对规则划分，有以下原因：  
+1. zone作为模版提高配置复用性和效率
+2. zone可以针对不同网卡进行不同设置
+
+常用的zone有：  
+1. trusted 全部允许
+2. public（默认）
+3. drop 拒绝，除非与流出流量相关
+
+配置模式：  
+1. runtime 当前生效，重启后失效
+2. permanent 当前不生效，重启后生效
+
+若要permanent设定立刻生效，使用reload参数。  
+
+##### firewall-cmd
+
+| 参数                    | 功能                     |
+|-------------------------|--------------------------|
+| --get-default-zone      | 查看默认zone             |
+| --set-default-zone      | 设置默认zone             |
+| --get-zone-of-interface | 查看对应的网卡的默认zone |
+| --set-zone-of-interface | 设置对应网卡的默认zone   |
+| --panic-on              | 紧急模式（禁用一切流量） |
+| --panic-off             | 关闭紧急模式             |
+| --zone                  | 对该zone进行设置         |
+| --permanent             | 设置为permanent模式      |
+| --query-service         | 查询服务流量是否允许     |
+| --add-service           | 添加服务流量至允许       |
+| --add-port              | 添加端口                 |
+| --add-forward-port      | 添加转发端口             |
+
+查看服务对应的端口：/etc/services  
+firewall-cmd可以设置富规则，但命令冗长复杂，不推荐。  
