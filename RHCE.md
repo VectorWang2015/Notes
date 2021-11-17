@@ -794,9 +794,10 @@ Network Manager Text UI
 # ensure cockpit is installed
 dnf install cockpit
 # start cockpit
-systemctl start cockpit
+systemctl restart cockpit
+systemctl enable cockpit
 # enable cockpit socket
-systemctl enable cockpit.socket
+#systemctl enable cockpit.socket
 ```
 然后访问本机地址的9090端口就可以网页显示cockpit  
 
@@ -806,6 +807,8 @@ systemctl enable cockpit.socket
 在RHEL8中，防火墙的配置可以使用：  
 1. iptables
 2. firewalld服务
+
+**考试时，若指定端口，不指定协议，则tcp和udp均需配置。**  
 
 #### iptables（不推荐）
 
@@ -863,3 +866,75 @@ RHCE认证考试时应使用REJECT，不然无从得知是网卡配置问题还�
 
 查看服务对应的端口：/etc/services  
 firewall-cmd可以设置富规则，但命令冗长复杂，不推荐。  
+
+##### firewall-config
+
+默认没安装，需要手动安装：  
+```
+dnf install firewall-config
+```
+firewall-config配置与cmd等价，需要注意：  
+1. 默认config为runtime
+2. reload在菜单栏options内
+
+## chapter 9
+
+### NetworkManager
+RHEL默认使用NetworkManager来提供网络服务  
+我们使用nmcli来管理NetworkManger服务，可以这样查看网络信息或状态：  
+```
+nmcli con show
+nmcli con show [if name]
+```
+每一个connection均为一套配置，可以进行配置和切换。一个典型配置如下：  
+```
+nmcli connection add con-name company ifname ens160 autoconnect no type ethernet ip4 192.168.10.10/24 gw4 192.168.10.1
+```
+进行配置后永久生效，需要使用时采用如下命令：  
+```
+nmcli connnection up [con name]
+```
+### 网卡绑定
+使用nmtui或cockpit。  
+
+### sshd服务
+
+ssh可以使用两种验证方式：  
+1. 口令验证
+2. 密钥文件 ssh-keygen, ssh-copy-id
+
+远程传输：scp（ssh copy）  
+```
+scp [file_name] [server_addr]:[route]
+scp [server_addr]:[route]/[file] [route]
+```
+如果要递归传输文件夹，需要加-r参数。  
+
+
+## 附录
+
+### RHEL软件源
+
+RHEL软件源可以有以下几种：  
+1. http/ftp
+2. file
+3. subscribe
+
+仓库配置文件在/etc/yum.repos.d/内，均以repo结尾。  
+一个典型文件源仓库配置文件大致如下：  
+```
+[] #唯一标识
+name= #描述
+baseurl = file:///media/cdrom #file://表示文件源，/为根目录
+enabled = 1
+gpgcheck = 0
+```
+
+### Linux中配置服务
+
+1. 主配置文件（最重要）：/etc/服务名/服务名.conf
+2. 一般配置文件：/etc/服务名/*，/etc/服务名.d/*
+
+linux中，修改了服务的配置文件后，需要start（开启）或restart，以及enable（加入开机项），以保证其正常工作。  
+
+需要注意，RHEL8的光盘中，由于软件太多，所以分开存储在两文件夹中，分别为BaseOS和AppStream，这二者需要分别写配置。  
