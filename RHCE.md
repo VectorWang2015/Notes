@@ -946,12 +946,39 @@ Security-Enhanced Linux，是一个强制访问控制的安全子系统。它包
 
 SELinux的配置文件在/etc/selinux/config，建议设置为enforcing（强制开启）。  
 SELinux有以下常用命令：  
-| command    | description                              |
-|------------|------------------------------------------|
-| getenforce | return SELinux running status            |
-| setenforce | temporary, 0 for close SEL, 1 for enable |
-| <++>       | <++>                                     |
-| <++>       | <++>                                     |
+| command    | description                                                      |
+|------------|------------------------------------------------------------------|
+| getenforce | return SELinux running status                                    |
+| setenforce | temporary, 0 for close SEL, 1 for enable                         |
+| semanage   | manage SEL context, see e.g. below                               |
+| getsebool  | getsebool -a for checking all sebools (zone)                     |
+| setsebool  | setsebool -P [strategy]=on for permanently turn on (zone)        |
+| restorecon | -R for recursively, -v for visualize, make SEL context in effect |
+
+e.g.  
+```
+# l for long, d for dir, Z for check SEL context
+ls -ldZ [dir]
+semanage fcontext -a -t httpd_sys_content_t [dir]
+semanage fcontext -a -t httpd_sys_content_t [dir]/*
+restorecon -Rv [dir]
+```
+
+### 家目录
+
+注意：需要配置整个家目录权限为755，而不是只有public_html。  
+htpasswd的用户名和密码是针对网页的，userdir.conf里的require user是针对系统用户的。  
+```
+<Directory "/home/*/public_html">
+    AllowOverride all 
+    authuserfile "/etc/httpd/passwd" 
+    authname "My privately website"
+    authtype basic
+    require user [web_user_name]
+</Directory>
+```
+
+### 虚拟网站主机等见书
 
 ## 附录
 
