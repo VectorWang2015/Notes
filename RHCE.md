@@ -910,6 +910,48 @@ scp [server_addr]:[route]/[file] [route]
 ```
 如果要递归传输文件夹，需要加-r参数。  
 
+### 不间断会话服务
+
+tmux
+
+### 日志信息检索
+
+由于许多服务都维护自身独立的日志文件，journalctl命令应运而生，它被用于检索和管理系统日志信息。  其常见参数如下：  
+| param   | description       |
+|---------|-------------------|
+| -k      | kernal journal    |
+| -b      | boot journal      |
+| -u      | service journal   |
+| -n      | number            |
+| -p      | type(e.g. crit)   |
+| -f      | realtime          |
+| --since |                   |
+| --until |                   |
+
+## chapter 10
+
+### Apache
+
+RHEL8中，Apache是默认的web服务，开启httpd即开启Apache。  
+httpd服务中，服务目录为：/etc/httpd，网站数据目录为/var/www/html  
+
+Apache的配置文件中，配置可分为全局与区域配置。全局配置针对于所有子站点，而区域配置单独针对每个独立的子站点。  
+<p align="center"><img src="./img/linux-apache-config.png"></img></p>
+
+### SELinux
+
+Security-Enhanced Linux，是一个强制访问控制的安全子系统。它包含域和安全上下文：  
+1. 域：限制服务程序功能
+2. 安全上下文： 限制服务对文件资源的访问
+
+SELinux的配置文件在/etc/selinux/config，建议设置为enforcing（强制开启）。  
+SELinux有以下常用命令：  
+| command    | description                              |
+|------------|------------------------------------------|
+| getenforce | return SELinux running status            |
+| setenforce | temporary, 0 for close SEL, 1 for enable |
+| <++>       | <++>                                     |
+| <++>       | <++>                                     |
 
 ## 附录
 
