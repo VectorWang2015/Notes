@@ -1,0 +1,73 @@
+\documentclass{article}
+\title{latex math}
+\author{vectorw}
+\date{\today}
+\usepackage{amsmath}
+
+\begin{document}
+% 行内公式
+Einstein 's $E=mc^2$.
+
+% 行间公式
+\[ E=mc^2. \]
+% 行间公式，带标号
+\begin{equation}
+E=mc^2
+\end{equation}
+
+\[ z = r\cdot e^{2\pi i}. \]
+\[ \pm\; \times\; \div\; \cdot\; \cap\; \cup\;
+\geq\; \leq\; \neq\; \approx\; \equiv \]
+
+$ \sum_{i=1}^n i\quad \prod_{i=1}^n $
+
+$ \sum\limits _{i=1}^n i\quad \prod\limits _{i=1}^n $
+
+\[ \lim_{x\to0}x^2 \quad \int_a^b x^2 dx \]
+\[ \lim\nolimits_{x\to0}x^2 \quad \int\nolimits_a^b x^2 dx \]
+\[ \iint\quad \iiint\quad \iiiint\quad \idotsint \]
+
+% 由于\,\|的混乱，amsmath建议使用lvert,lVert以及rvert,rVert
+\[ \Biggl\lVert \biggl\lVert \Bigl\lVert \bigl\lVert \lVert x
+\rVert \bigr\rVert \Bigr\rVert \biggr\rVert \Biggr\rVert \]
+
+\[ x_1,x_2,\dots,x_n \quad 1,2,\cdots,n\quad
+\vdots\quad \ddots \]
+
+% 矩阵
+\[ \begin{pmatrix} a&b \\ c&d \end{pmatrix} \quad
+\begin{bmatrix} a&b \\ c&d \end{bmatrix} \quad
+\begin{Bmatrix} a&b \\ c&d \end{Bmatrix} \quad
+\begin{vmatrix} a&b \\ c&d \end{vmatrix} \quad
+\begin{Vmatrix} a&b \\ c&d \end{Vmatrix} \]
+
+% 行内矩阵
+Marry has a little matrix $( \begin{smallmatrix} a&b\\c&d \end{smallmatrix} )$.
+
+% {}提供了一个空格
+\[\begin{aligned}
+x ={}& a+b+c+{} \\
+& d+e+f+g
+\end{aligned}\]
+
+% 这里的公式组，每个公式获得一个标号
+\begin{align}
+a &= b+c+d \\
+x &= y+z
+\end{align}
+
+% 这里的公式组，公式组作为整体获得标号
+\begin{equation}
+\begin{aligned}
+x ={}& a+b+c+{} \\
+& d+e+f+g
+\end{aligned}
+\end{equation}
+
+\[ y=\begin{cases}
+-x, &x\leq 0 \\
+x, &x>0
+\end{cases}
+\]
+
+\end{document}
