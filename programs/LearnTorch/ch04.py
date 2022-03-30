@@ -121,3 +121,80 @@ print(predicted_index.sum())
 actual_index = target > 5
 n_matches = torch.sum(actual_index & predicted_index).item()
 print(n_matches)
+
+
+bikes_np = np.loadtxt("p1ch4/bike-sharing-dataset/hour-fixed.csv",
+        dtype = np.float32,
+        delimiter = ',',
+        skiprows = 1,
+        # apply lambda on column 1
+        converters = {1: lambda x: float(x[8:10])}
+        )
+bikes = torch.from_numpy(bikes_np)
+
+# -1 means that this value should be computed
+daily_bikes = bikes.view(-1, 24, bikes.shape[1])
+daily_bikes = daily_bikes.transpose(1,2)
+print(daily_bikes.shape)
+
+
+# take the data for the first 24 hours
+# weather is ranked 1-4, onehot needs 24x4 space
+first_day = bikes[:24].long()
+weather_onehot = torch.zeros(24,4)
+first_day_unsqueeze = first_day[:,9].unsqueeze(1).long()-1
+weather_onehot.scatter_(1, first_day_unsqueeze, 1.0)
+print(weather_onehot)
+
+# cat(seq, dim)
+print(torch.cat((bikes[:24], weather_onehot), 1)[:1])
+
+
+bikes_onehot = torch.zeros(daily_bikes.shape[0], 4, daily_bikes.shape[2])
+bikes_rate = daily_bikes[:,9].unsqueeze(1).long() - 1
+bikes_onehot.scatter_(1, bikes_rate, 1.0)
+
+daily_bikes = torch.cat((daily_bikes, bikes_onehot), dim=1)
+print(daily_bikes[0,:,0])
+
+
+daily_bikes[:,9,:] = (daily_bikes[:,9,:] - 1.0) / 3.0
+print(daily_bikes[0,:,0])
+
+
+with open("p1ch4/jane-austen/1342-0.txt", encoding='utf8') as f:
+    text = f.read()
+
+lines = text.split('\n')
+line = lines[200]
+letter_t = torch.zeros(len(line), 128)
+
+for i, letter in enumerate(line.lower().strip()):
+    letter_index = ord(letter) if ord(letter) < 128 else 0
+    letter_t[i][letter_index] = 1
+
+print(letter_t)
+
+def clean_words(input_str):
+    punctuations = '.,:;?!"“”-_'
+    word_list = input_str.lower().split()
+    word_list = [word.strip(punctuations) for word in word_list]
+    return word_list
+
+words_in_line = clean_words(line)
+print(line, words_in_line)
+
+
+word_list = sorted(set(clean_words(text)))
+word2index_list = {word:i for (i, word) in enumerate(word_list)}
+print(word_list)
+print(len(word2index_list))
+print(word2index_list['impossible'])
+
+word_t = torch.zeros(len(words_in_line), len(word2index_list))
+for i, word in enumerate(words_in_line):
+    word_index = word2index_list[word]
+    word_t[i][word_index] = 1
+    print('{} {} {}'.format(i, word_index, word))
+
+print(word_t.shape)
